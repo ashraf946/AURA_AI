@@ -8,13 +8,12 @@ INTENT_KEYWORDS = {
     "goodbye": ["bye", "good night", "see you"]
 }
 
-def detect_intents(text: str) -> dict:
+def detect_intent(text: str) -> str:
     text = text.lower()
-    scores = {intent: 0 for intent in INTENT_KEYWORDS}
 
     for intent, words in INTENT_KEYWORDS.items():
         for w in words:
             if w in text:
-                scores[intent] += 1
+                return intent
 
-    return scores
+    return "general"
