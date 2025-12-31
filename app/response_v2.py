@@ -1,47 +1,41 @@
-import random
-from app.sentiment import analyze_sentiment
-from app.intent_v2 import detect_intents
-from app.topic_tracker import detect_topic
+from app.intent_v2 import detect_intent
+from app.personality import get_personality_reply
+from app.context import get_context_reply
+from app.llm_client import ask_chatgpt
 
-def generate_response_v2(text, memory, context):
-    sentiment = analyze_sentiment(text)
-    intents = detect_intents(text)
-    topic = detect_topic(text)
 
-    name = memory.get("user_name", "Ashraf")
+# keywords that usually indicate real-world / factual questions
+KNOWLEDGE_KEYWORDS = [
+    "who is", "what is", "when", "where", "why", "how",
+    "ceo", "founder", "capital", "president",
+    "explain", "define", "meaning of"
+]
 
-    dominant_intent = max(intents, key=intents.get)
-    context.add(text, sentiment, dominant_intent)
 
-    # ---------------- CHATGPT-LIKE REPLIES ----------------
+def is_knowledge_question(message: str) -> bool:
+    msg = message.lower()
+    return any(keyword in msg for keyword in KNOWLEDGE_KEYWORDS)
 
-    if dominant_intent == "affection":
-        return (
-            f"Aww 💖 I really appreciate that, {name}. "
-            "Positive energy like this makes conversations better. "
-            "How are you feeling right now?"
-        )
 
-    if dominant_intent == "greeting":
-        return (
-            f"Hey {name} 👋 It’s nice to see you again. "
-            "How’s your day going so far?"
-        )
+def generate_response_v2(user_message: str, user_name: str, memory: dict) -> str:
+    """
+    Main brain of AURA AI v2
+    """
 
-    if sentiment == "negative":
-        return (
-            "I’m really sorry you’re feeling this way 😔. "
-            "Do you want to talk about what’s been bothering you?"
-        )
+    # 1️⃣ FORCE ChatGPT for real-world questions
+    if is_knowledge_question(user_message):
+        return ask_chatgpt(user_message)
 
-    if sentiment == "positive":
-        return (
-            "That’s great to hear 😊. "
-            "What’s been going well for you?"
-        )
+    # 2️⃣ Try contextual memory-based reply
+    context_reply = get_context_reply(user_message, memory)
+    if context_reply:
+        return context_reply
 
-    # Neutral / default (ChatGPT-like)
-    return (
-        "I’m listening 👂. "
-        "Tell me a bit more so I can understand you better."
-    )
+    # 3️⃣ Try intent-based personality reply
+    intent = detect_intent(user_message)
+    personality_reply = get_personality_reply(intent, user_name)
+    if personality_reply:
+        return personality_reply
+
+    # 4️⃣ Fallback to ChatGPT if unsure
+    return ask_chatgpt(user_message)
