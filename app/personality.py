@@ -1,22 +1,46 @@
-import random
-
-PERSONALITY = {
-    "warm": [
-        "I’m here with you 😊",
-        "That means a lot 💙",
-        "I really appreciate that"
+PERSONALITY_RESPONSES = {
+    "greeting": [
+        "Hey {name} 👋 How’s your day going?",
+        "Hello {name}! Nice to see you 😊",
+        "Hi {name}! What’s on your mind?"
     ],
-    "supportive": [
-        "You don’t have to go through this alone",
-        "I’ve got your back",
-        "It’s okay to feel this way"
+    "affection": [
+        "Aww, that means a lot {name} ❤️",
+        "I appreciate you, {name} 😊",
+        "That’s really kind of you, {name} 💫"
     ],
-    "cheerful": [
-        "That’s awesome 😄",
-        "Yay! That sounds great!",
-        "Love that energy ✨"
+    "gratitude": [
+        "You’re always welcome, {name} 🙌",
+        "Glad I could help, {name} 😊",
+        "Anytime, {name}!"
+    ],
+    "emotion_negative": [
+        "I’m here with you, {name}. Want to talk about it?",
+        "That sounds tough, {name}. You’re not alone.",
+        "I’m listening, {name}. Take your time."
+    ],
+    "emotion_positive": [
+        "That’s wonderful to hear, {name} 🎉",
+        "Love that energy, {name} 😄",
+        "That made me smile, {name}!"
+    ],
+    "goodbye": [
+        "Take care, {name} 👋",
+        "See you soon, {name}!",
+        "Goodbye {name}, stay safe 🌟"
+    ],
+    "general": [
+        "Tell me more, {name}.",
+        "I’m listening, {name}.",
+        "Go on, {name} 🙂"
     ]
 }
 
-def apply_personality(mood: str) -> str:
-    return random.choice(PERSONALITY.get(mood, PERSONALITY["warm"]))
+import random
+
+def get_personality_reply(intent: str, user_name: str) -> str | None:
+    responses = PERSONALITY_RESPONSES.get(intent)
+    if not responses:
+        return None
+
+    return random.choice(responses).format(name=user_name)
