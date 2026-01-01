@@ -1,41 +1,20 @@
-from app.intent_v2 import detect_intent
-from app.personality import get_personality_reply
-from app.context import get_context_reply
-from app.llm_client import ask_chatgpt
-
-
-# keywords that usually indicate real-world / factual questions
-KNOWLEDGE_KEYWORDS = [
-    "who is", "what is", "when", "where", "why", "how",
-    "ceo", "founder", "capital", "president",
-    "explain", "define", "meaning of"
-]
-
-
-def is_knowledge_question(message: str) -> bool:
-    msg = message.lower()
-    return any(keyword in msg for keyword in KNOWLEDGE_KEYWORDS)
-
-
-def generate_response_v2(user_message: str, user_name: str, memory: dict) -> str:
+def get_context_reply(user_message: str, memory: dict) -> str | None:
     """
-    Main brain of AURA AI v2
+    Uses short-term memory to maintain simple conversational context.
     """
 
-    # 1️⃣ FORCE ChatGPT for real-world questions
-    if is_knowledge_question(user_message):
-        return ask_chatgpt(user_message)
+    last_user_message = memory.get("last_user_message")
 
-    # 2️⃣ Try contextual memory-based reply
-    context_reply = get_context_reply(user_message, memory)
-    if context_reply:
-        return context_reply
+    if not last_user_message:
+        return None
 
-    # 3️⃣ Try intent-based personality reply
-    intent = detect_intent(user_message)
-    personality_reply = get_personality_reply(intent, user_name)
-    if personality_reply:
-        return personality_reply
+    msg = user_message.lower()
 
-    # 4️⃣ Fallback to ChatGPT if unsure
-    return ask_chatgpt(user_message)
+    # Simple follow-up handling
+    if msg in ["yes", "yeah", "yep", "okay", "ok"]:
+        return "Got it 👍 Tell me more."
+
+    if msg in ["no", "not really", "nope"]:
+        return "Alright 🙂 What would you like to talk about?"
+
+    return None
